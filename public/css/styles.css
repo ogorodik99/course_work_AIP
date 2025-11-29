@@ -1,0 +1,64 @@
+/* Шрифты */
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #a8e063, #56ab2f);
+    color: #fff;
+}
+
+/* HERO */
+.main-title, .section-title {
+    font-family: 'Inter', sans-serif;
+}
+
+.main-title {
+    font-weight: 700;
+}
+
+.section-title {
+    font-weight: 600;
+    font-size: 2.2rem;
+}
+
+/* Intro image animation */
+.doctor-img {
+    animation: float 3s ease-in-out infinite;
+    display: block;
+    margin: 0 auto;
+}
+
+@keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0); }
+}
+
+/* Карточки */
+.card-text {
+    font-size: 0.95rem;
+}
+
+.card-item .card {
+    border-radius: 16px;
+    transition: transform 0.3s ease;
+}
+
+.card-item .card:hover {
+    transform: translateY(-8px) scale(1.03);
+}
+
+/* Scroll animation */
+.hidden {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 0.7s ease;
+}
+
+.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Footer */
+.footer {
+    background: rgba(0,0,0,0.3);
+}
