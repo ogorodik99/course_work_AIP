@@ -1,7 +1,8 @@
 /* Шрифты */
+
 body {
     font-family: 'Roboto', sans-serif;
-    background: linear-gradient(135deg, #a8e063, #56ab2f);
+    background: radial-gradient(circle,rgba(33, 163, 200, 1) 0%, rgba(59, 59, 59, 1) 50%, rgba(0, 56, 176, 1) 100%);
     color: #fff;
 }
 
@@ -18,9 +19,12 @@ body {
     font-weight: 600;
     font-size: 2.2rem;
 }
+.bg-custom {
+    background: linear-gradient(135deg, #020207, #57d0ff);
+}
 
 /* Intro image animation */
-.doctor-img {
+.logo-img {
     animation: float 3s ease-in-out infinite;
     display: block;
     margin: 0 auto;
