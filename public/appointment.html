@@ -5,85 +5,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Авторизация – МедЗапись</title>
-
+    <link rel="shortcut icon" href="img/logo.png">
     <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles_register.css">
 </head>
 
 <body>
+    <!-- Фоновые фигуры -->
+    <div class="bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
 
     <!-- ШАПКА -->
-    <div class="header">
-        <img src="img/logo.png" alt="Логотип">
-        <div class="header-title">МедЗапись</div>
-    </div>
-    <div class="main-text">
-        <h1 class="header-main-text">Выберите вариант для входаа</h1>
-    </div>
-    <div class="container container-auth">
-
-        <!-- Кнопки переключения (по центру сверху) -->
-        <div class="d-flex justify-content-center mb-4">
-            <button id="btn-login" class="btn btn-outline-light me-2 active">Вход</button>
-            <button id="btn-register" class="btn btn-outline-light">Регистрация</button>
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+                <div class="brand-icon">
+                    <i class="bi bi-heart-pulse-fill"></i>
+                </div>
+                <span class="brand-text">МедЗапись</span>
+            </a>
+            <a href="index.html" class="btn btn-back">
+                <i class="bi bi-arrow-left me-1"></i> На главную
+            </a>
         </div>
+    </nav>
 
-
-        <!-- Вход -->
-        <div id="login" class="auth-box">
-            <h3>Вход</h3>
-            <form action="/login" method="POST">
-                <div class="mb-3">
-                    <label class="form-label">Логин</label>
-                    <input type="text" name="username" class="form-control" placeholder="Введите логин" required>
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <main class="auth-main">
+        <div class="container">
+            <div class="auth-wrapper">
+                <!-- Заголовок -->
+                <div class="auth-header text-center">
+                    <h1>Добро пожаловать</h1>
+                    <p>Войдите или создайте аккаунт для записи к врачу</p>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Пароль</label>
-                    <input type="password" name="password" class="form-control" placeholder="Введите пароль" required>
+                <!-- Переключатель -->
+                <div class="tab-switch">
+                    <button id="btn-login" class="tab-btn active">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Вход
+                    </button>
+                    <button id="btn-register" class="tab-btn">
+                        <i class="bi bi-person-plus me-2"></i>Регистрация
+                    </button>
+                    <div class="tab-indicator" id="tab-indicator"></div>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100">Войти</button>
-                <a href="index.html" class="btn btn-secondary w-100 mt-2">Назад на главную</a>
-            </form>
+                <!-- Вход -->
+                <div id="login" class="auth-form">
+                    <form action="../backend/login.php" method="POST">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="bi bi-person"></i> Логин
+                            </label>
+                            <input type="text" name="username" class="form-control" placeholder="Введите логин" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="bi bi-lock"></i> Пароль
+                            </label>
+                            <input type="password" name="password" class="form-control" placeholder="Введите пароль" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-submit w-100">
+                            <i class="bi bi-arrow-right-circle me-2"></i>Войти
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Регистрация -->
+                <div id="register" class="auth-form" style="display:none;">
+                    <form action="../backend/register.php" method="POST" id="registerForm">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="bi bi-envelope"></i> Почта
+                            </label>
+                            <input type="email" name="email" class="form-control" placeholder="Введите e-mail" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="bi bi-person"></i> Имя пользователя
+                            </label>
+                            <input type="text" name="username" class="form-control" placeholder="Введите имя пользователя" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="bi bi-lock"></i> Пароль
+                            </label>
+                            <input type="password" id="password" name="password" class="form-control" placeholder="Введите пароль" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="bi bi-lock-fill"></i> Подтверждение пароля
+                            </label>
+                            <input type="password" id="password_confirm" name="password_confirm" class="form-control" placeholder="Повторите пароль" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-submit w-100">
+                            <i class="bi bi-check-circle me-2"></i>Зарегистрироваться
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
+    </main>
 
-        <!-- Регистрация -->
-        <div id="register" class="auth-box" style="display:none;">
-            <h3>Регистрация</h3>
-            <form action="/register" method="POST" id="registerForm">
-                <div class="mb-3">
-                    <label class="form-label">Почта</label>
-                    <input type="email" name="email" class="form-control" placeholder="Введите e-mail" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Имя пользователя</label>
-                    <input type="text" name="username" class="form-control" placeholder="Введите имя пользователя"
-                        required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Пароль</label>
-                    <input type="password" id="password" name="password" class="form-control"
-                        placeholder="Введите пароль" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Подтверждение пароля</label>
-                    <input type="password" id="password_confirm" name="password_confirm" class="form-control"
-                        placeholder="Повторите пароль" required>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
-                <a href="index.html" class="btn btn-secondary w-100 mt-2">Назад на главную</a>
-            </form>
-        </div>
-
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Проверка совпадения паролей
         document.getElementById('registerForm').addEventListener('submit', function (e) {
@@ -91,7 +130,25 @@
             let confirm = document.getElementById('password_confirm').value;
             if (pass !== confirm) {
                 e.preventDefault();
-                alert("Пароли не совпадают!");
+                // Показать ошибку красиво
+                const confirmInput = document.getElementById('password_confirm');
+                confirmInput.style.borderColor = '#ef4444';
+                confirmInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.15)';
+
+                // Показать сообщение
+                let msg = document.querySelector('.error-msg');
+                if (!msg) {
+                    msg = document.createElement('div');
+                    msg.className = 'error-msg';
+                    msg.textContent = 'Пароли не совпадают!';
+                    confirmInput.parentElement.appendChild(msg);
+                }
+
+                setTimeout(() => {
+                    confirmInput.style.borderColor = '';
+                    confirmInput.style.boxShadow = '';
+                    if (msg) msg.remove();
+                }, 3000);
             }
         });
 
@@ -100,12 +157,14 @@
         const btnRegister = document.getElementById('btn-register');
         const loginBox = document.getElementById('login');
         const registerBox = document.getElementById('register');
+        const indicator = document.getElementById('tab-indicator');
 
         btnLogin.addEventListener('click', () => {
             loginBox.style.display = 'block';
             registerBox.style.display = 'none';
             btnLogin.classList.add('active');
             btnRegister.classList.remove('active');
+            indicator.style.left = '0';
         });
 
         btnRegister.addEventListener('click', () => {
@@ -113,6 +172,19 @@
             registerBox.style.display = 'block';
             btnRegister.classList.add('active');
             btnLogin.classList.remove('active');
+            indicator.style.left = '50%';
+        });
+
+        // Анимация появления
+        document.addEventListener('DOMContentLoaded', () => {
+            const wrapper = document.querySelector('.auth-wrapper');
+            wrapper.style.opacity = '0';
+            wrapper.style.transform = 'translateY(30px)';
+            setTimeout(() => {
+                wrapper.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+                wrapper.style.opacity = '1';
+                wrapper.style.transform = 'translateY(0)';
+            }, 100);
         });
     </script>
 </body>

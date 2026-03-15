@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель – МедЗапись</title>
+    <link rel="shortcut icon" href="img/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top scrolled">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+            <div class="brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+            <span class="brand-text">МедЗапись</span>
+            <span class="badge-custom ms-2">Админ</span>
+        </a>
+        <div class="d-flex gap-2">
+            <a href="../backend/logout.php" class="btn btn-outline-danger btn-sm">Выход</a>
+        </div>
+    </div>
+</nav>
+
+<main class="page-content">
+    <div class="container-fluid px-4">
+        <!-- Навигация -->
+        <div class="cabinet-tabs mb-4">
+            <button class="cab-tab active" onclick="showAdminTab('dashboard')"><i class="bi bi-speedometer2"></i> Обзор</button>
+            <button class="cab-tab" onclick="showAdminTab('appointments')"><i class="bi bi-calendar-check"></i> Записи</button>
+            <button class="cab-tab" onclick="showAdminTab('queue')"><i class="bi bi-people"></i> Очередь</button>
+            <button class="cab-tab" onclick="showAdminTab('schedule')"><i class="bi bi-table"></i> Расписание</button>
+            <button class="cab-tab" onclick="showAdminTab('doctors')"><i class="bi bi-person-badge"></i> Врачи</button>
+            <button class="cab-tab" onclick="showAdminTab('reports')"><i class="bi bi-graph-up"></i> Отчёты</button>
+        </div>
+
+        <!-- ОБЗОР -->
+        <div id="tab-dashboard" class="tab-content">
+            <h3 class="tab-title mb-4">Панель управления</h3>
+            <div class="row g-4" id="stats-cards">
+                <div class="col-md-4 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-card-icon"><i class="bi bi-people-fill"></i></div>
+                        <div><div class="stat-card-number" id="stat-patients">—</div><div class="stat-card-label">Пациентов</div></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-card-icon"><i class="bi bi-calendar-check-fill"></i></div>
+                        <div><div class="stat-card-number" id="stat-today">—</div><div class="stat-card-label">Записей сегодня</div></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-card-icon"><i class="bi bi-check-circle-fill"></i></div>
+                        <div><div class="stat-card-number" id="stat-completed">—</div><div class="stat-card-label">Завершено приёмов</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ЗАПИСИ -->
+        <div id="tab-appointments" class="tab-content" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="tab-title">Записи на день</h3>
+                <input type="date" class="form-control-dark" id="admin-date" style="max-width:200px;">
+            </div>
+            <div id="admin-appointments-list"></div>
+        </div>
+
+        <!-- ОЧЕРЕДЬ -->
+        <div id="tab-queue" class="tab-content" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="tab-title">Электронная очередь</h3>
+                <button class="btn btn-accent btn-sm" onclick="generateQueue()"><i class="bi bi-plus-circle me-1"></i> Сформировать очередь</button>
+            </div>
+            <div id="queue-list"></div>
+        </div>
+
+        <!-- РАСПИСАНИЕ -->
+        <div id="tab-schedule" class="tab-content" style="display:none;">
+            <h3 class="tab-title mb-3">Расписание врачей</h3>
+            <div id="schedule-table"></div>
+        </div>
+
+        <!-- ВРАЧИ -->
+        <div id="tab-doctors" class="tab-content" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="tab-title">Управление врачами</h3>
+                <button class="btn btn-accent btn-sm" onclick="showAddDoctorForm()"><i class="bi bi-plus me-1"></i> Добавить врача</button>
+            </div>
+            <div id="add-doctor-form" style="display:none;" class="glass-card mb-4">
+                <h5 class="mb-3">Новый врач</h5>
+                <div class="row g-3">
+                    <div class="col-md-6"><input class="form-control-dark" id="new-doc-name" placeholder="ФИО"></div>
+                    <div class="col-md-3"><select class="form-control-dark" id="new-doc-spec"></select></div>
+                    <div class="col-md-3"><input class="form-control-dark" id="new-doc-exp" type="number" placeholder="Стаж (лет)"></div>
+                    <div class="col-md-6"><input class="form-control-dark" id="new-doc-edu" placeholder="Образование"></div>
+                    <div class="col-md-3"><input class="form-control-dark" id="new-doc-phone" placeholder="Телефон"></div>
+                    <div class="col-md-3"><input class="form-control-dark" id="new-doc-cabinet" placeholder="Кабинет"></div>
+                </div>
+                <button class="btn btn-accent btn-sm mt-3" onclick="addDoctor()">Сохранить</button>
+                <button class="btn btn-glass btn-sm mt-3" onclick="document.getElementById('add-doctor-form').style.display='none'">Отмена</button>
+            </div>
+            <div id="doctors-admin-list"></div>
+        </div>
+
+        <!-- ОТЧЁТЫ -->
+        <div id="tab-reports" class="tab-content" style="display:none;">
+            <h3 class="tab-title mb-4">Отчёты и статистика</h3>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="glass-card">
+                        <h5><i class="bi bi-bar-chart me-2"></i>Статистика по врачам</h5>
+                        <div id="doctors-report" class="mt-3"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="glass-card">
+                        <h5><i class="bi bi-pie-chart me-2"></i>По специальностям</h5>
+                        <div id="spec-report" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API = '../backend/api';
+
+function showAdminTab(name) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.getElementById(`tab-${name}`).style.display = 'block';
+    document.querySelectorAll('.cab-tab').forEach(t => t.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    if (name === 'appointments') loadAdminAppointments();
+    if (name === 'queue') loadQueue();
+    if (name === 'schedule') loadSchedule();
+    if (name === 'doctors') loadAdminDoctors();
+    if (name === 'reports') loadReports();
+}
+
+// Статистика
+async function loadStats() {
+    try {
+        const res = await fetch(`${API}/reports.php?action=summary`);
+        const json = await res.json();
+        if (json.success) {
+            document.getElementById('stat-patients').textContent = json.data.total_patients;
+            document.getElementById('stat-today').textContent = json.data.today_appointments;
+            document.getElementById('stat-completed').textContent = json.data.completed_appointments;
+        }
+    } catch(e) {}
+}
+
+// Записи на день
+async function loadAdminAppointments() {
+    const date = document.getElementById('admin-date').value || new Date().toISOString().split('T')[0];
+    try {
+        const res = await fetch(`${API}/appointments.php?action=all&date=${date}`);
+        const json = await res.json();
+        const container = document.getElementById('admin-appointments-list');
+
+        if (json.success && json.data.length > 0) {
+            container.innerHTML = `
+                <div class="table-responsive"><table class="table-dark-custom">
+                    <thead><tr><th>Время</th><th>Пациент</th><th>Врач</th><th>Каб.</th><th>Статус</th><th>Действия</th></tr></thead>
+                    <tbody>
+                        ${json.data.map(a => {
+                            const st = { pending: 'Ожидание', confirmed: 'Подтверждено', completed: 'Завершено', cancelled: 'Отменено' };
+                            return `<tr>
+                                <td>${a.appointment_time.substring(0,5)}</td>
+                                <td>${a.patient_name || '—'}</td>
+                                <td>${a.doctor_name}</td>
+                                <td>${a.cabinet || '—'}</td>
+                                <td><span class="status-badge status-${a.status === 'confirmed' ? 'success' : a.status === 'completed' ? 'info' : a.status === 'cancelled' ? 'danger' : 'warning'}">${st[a.status]}</span></td>
+                                <td>
+                                    ${a.status === 'confirmed' ? `<button class="btn btn-sm btn-accent" onclick="updateAppointment(${a.id}, 'completed')">Завершить</button>` : ''}
+                                    ${a.status === 'pending' ? `<button class="btn btn-sm btn-accent" onclick="updateAppointment(${a.id}, 'confirmed')">Подтвердить</button>` : ''}
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table></div>`;
+        } else {
+            container.innerHTML = '<div class="empty-state"><i class="bi bi-calendar-x"></i><p>Нет записей на эту дату</p></div>';
+        }
+    } catch(e) {
+        document.getElementById('admin-appointments-list').innerHTML = '<p class="text-danger">Ошибка загрузки</p>';
+    }
+}
+
+async function updateAppointment(id, status) {
+    await fetch(`${API}/appointments.php`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+    });
+    loadAdminAppointments();
+}
+
+document.getElementById('admin-date')?.addEventListener('change', loadAdminAppointments);
+
+// Очередь
+async function loadQueue() {
+    try {
+        const res = await fetch(`${API}/queue.php`);
+        const json = await res.json();
+        const container = document.getElementById('queue-list');
+
+        if (json.success && json.data.length > 0) {
+            container.innerHTML = json.data.map(q => {
+                const stMap = { waiting: { text: 'Ожидает', cls: 'warning', icon: 'hourglass' }, in_progress: { text: 'На приёме', cls: 'success', icon: 'person-check' }, done: { text: 'Завершён', cls: 'info', icon: 'check-circle' }, skipped: { text: 'Пропущен', cls: 'danger', icon: 'x-circle' } };
+                const st = stMap[q.status] || stMap.waiting;
+                return `
+                    <div class="queue-card ${q.status === 'in_progress' ? 'queue-active' : ''}">
+                        <div class="queue-number">${q.queue_number}</div>
+                        <div class="queue-info">
+                            <strong>${q.patient_name}</strong>
+                            <span>${q.doctor_name} · ${q.specialization_name} · Каб. ${q.cabinet}</span>
+                            <span class="text-muted-custom">${q.appointment_time.substring(0,5)}</span>
+                        </div>
+                        <div class="queue-actions">
+                            <span class="status-badge status-${st.cls}"><i class="bi bi-${st.icon} me-1"></i>${st.text}</span>
+                            ${q.status === 'waiting' ? `<button class="btn btn-sm btn-accent" onclick="updateQueue(${q.id}, 'in_progress')">Вызвать</button>` : ''}
+                            ${q.status === 'in_progress' ? `<button class="btn btn-sm btn-accent" onclick="updateQueue(${q.id}, 'done')">Завершить</button>` : ''}
+                            ${q.status === 'waiting' ? `<button class="btn btn-sm btn-outline-danger" onclick="updateQueue(${q.id}, 'skipped')">Пропустить</button>` : ''}
+                        </div>
+                    </div>`;
+            }).join('');
+        } else {
+            container.innerHTML = '<div class="empty-state"><i class="bi bi-people"></i><p>Очередь пуста. Нажмите «Сформировать очередь».</p></div>';
+        }
+    } catch(e) {
+        document.getElementById('queue-list').innerHTML = '<p class="text-danger">Ошибка загрузки очереди</p>';
+    }
+}
+
+async function generateQueue() {
+    await fetch(`${API}/queue.php`, { method: 'POST' });
+    loadQueue();
+}
+
+async function updateQueue(id, status) {
+    await fetch(`${API}/queue.php`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+    });
+    loadQueue();
+}
+
+// Расписание
+async function loadSchedule() {
+    try {
+        const res = await fetch(`${API}/schedule.php`);
+        const json = await res.json();
+        const container = document.getElementById('schedule-table');
+
+        if (json.success && json.data.length > 0) {
+            container.innerHTML = `
+                <div class="table-responsive"><table class="table-dark-custom">
+                    <thead><tr><th>Врач</th><th>Специальность</th><th>День</th><th>Начало</th><th>Конец</th><th>Слот (мин)</th></tr></thead>
+                    <tbody>
+                        ${json.data.map(s => `<tr>
+                            <td>${s.doctor_name}</td>
+                            <td>${s.specialization_name || ''}</td>
+                            <td>${s.day_name}</td>
+                            <td>${s.start_time.substring(0,5)}</td>
+                            <td>${s.end_time.substring(0,5)}</td>
+                            <td>${s.slot_duration}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table></div>`;
+        } else {
+            container.innerHTML = '<div class="empty-state"><i class="bi bi-table"></i><p>Расписание не настроено</p></div>';
+        }
+    } catch(e) {
+        document.getElementById('schedule-table').innerHTML = '<p class="text-danger">Ошибка загрузки</p>';
+    }
+}
+
+// Врачи
+async function loadAdminDoctors() {
+    try {
+        const res = await fetch(`${API}/doctors.php`);
+        const json = await res.json();
+        const container = document.getElementById('doctors-admin-list');
+
+        if (json.success) {
+            container.innerHTML = `
+                <div class="table-responsive"><table class="table-dark-custom">
+                    <thead><tr><th>ФИО</th><th>Специальность</th><th>Стаж</th><th>Кабинет</th><th>Телефон</th></tr></thead>
+                    <tbody>
+                        ${json.data.map(d => `<tr>
+                            <td>${d.full_name}</td>
+                            <td>${d.specialization_name}</td>
+                            <td>${d.experience_years} лет</td>
+                            <td>${d.cabinet || '—'}</td>
+                            <td>${d.phone || '—'}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table></div>`;
+
+            // Загрузить специальности для формы
+            const specRes = await fetch(`${API}/specializations.php`);
+            const specJson = await specRes.json();
+            if (specJson.success) {
+                document.getElementById('new-doc-spec').innerHTML = specJson.data.map(s =>
+                    `<option value="${s.id}">${s.name}</option>`
+                ).join('');
+            }
+        }
+    } catch(e) {}
+}
+
+function showAddDoctorForm() {
+    document.getElementById('add-doctor-form').style.display = 'block';
+}
+
+async function addDoctor() {
+    const data = {
+        full_name: document.getElementById('new-doc-name').value,
+        specialization_id: document.getElementById('new-doc-spec').value,
+        experience_years: document.getElementById('new-doc-exp').value,
+        education: document.getElementById('new-doc-edu').value,
+        phone: document.getElementById('new-doc-phone').value,
+        cabinet: document.getElementById('new-doc-cabinet').value
+    };
+    await fetch(`${API}/doctors.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    document.getElementById('add-doctor-form').style.display = 'none';
+    loadAdminDoctors();
+}
+
+// Отчёты
+async function loadReports() {
+    try {
+        // Отчёт по врачам
+        const docRes = await fetch(`${API}/reports.php?action=doctors`);
+        const docJson = await docRes.json();
+        if (docJson.success) {
+            document.getElementById('doctors-report').innerHTML = docJson.data.length > 0
+                ? `<div class="table-responsive"><table class="table-dark-custom">
+                    <thead><tr><th>Врач</th><th>Специальность</th><th>Записей</th><th>Завершено</th><th>Отменено</th></tr></thead>
+                    <tbody>${docJson.data.map(d => `<tr>
+                        <td>${d.full_name}</td><td>${d.specialization}</td>
+                        <td>${d.total_appointments}</td><td>${d.completed}</td><td>${d.cancelled}</td>
+                    </tr>`).join('')}</tbody>
+                </table></div>`
+                : '<p class="text-muted-custom">Нет данных</p>';
+        }
+
+        // Отчёт по специальностям
+        const specRes = await fetch(`${API}/reports.php?action=specializations`);
+        const specJson = await specRes.json();
+        if (specJson.success) {
+            const total = specJson.data.reduce((s, r) => s + parseInt(r.count), 0) || 1;
+            document.getElementById('spec-report').innerHTML = specJson.data.map(s => {
+                const pct = Math.round((parseInt(s.count) / total) * 100);
+                return `
+                    <div class="report-bar-item">
+                        <div class="d-flex justify-content-between"><span>${s.name}</span><span>${s.count} записей</span></div>
+                        <div class="report-bar"><div class="report-bar-fill" style="width:${pct}%"></div></div>
+                    </div>`;
+            }).join('');
+        }
+    } catch(e) {}
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('admin-date').value = new Date().toISOString().split('T')[0];
+    loadStats();
+});
+</script>
+</body>
+</html>
