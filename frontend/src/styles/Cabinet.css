@@ -1,0 +1,563 @@
+/* ========================================
+   Cabinet Page Styles - Patient Dashboard
+   ======================================== */
+
+.cabinet-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  padding-bottom: 40px;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+
+.cabinet-header {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 24px 0;
+  margin-bottom: 32px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.cabinet-header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-greeting h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.header-greeting p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ========================================
+   TABS
+   ======================================== */
+
+.cabinet-tabs {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  padding: 0 24px;
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.cabinet-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cabinet-tab i {
+  font-size: 18px;
+}
+
+.cabinet-tab:hover {
+  color: var(--accent);
+}
+
+.cabinet-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ========================================
+   CONTENT
+   ======================================== */
+
+.cabinet-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.tab-section {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-section h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+}
+
+/* ========================================
+   ERROR & LOADING
+   ======================================== */
+
+.cabinet-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  margin: 0 24px 24px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+/* ========================================
+   APPOINTMENTS LIST
+   ======================================== */
+
+.appointments-list {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.appointment-card {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.appointment-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 32px rgba(14, 165, 233, 0.1);
+}
+
+.appointment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.appointment-doctor h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.appointment-doctor .specialty {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.appointment-details {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.detail-item i {
+  color: var(--accent);
+  font-size: 16px;
+}
+
+.appointment-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Confirm Dialog */
+.confirm-dialog {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.confirm-dialog p {
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+
+.empty-state {
+  text-align: center;
+  padding: 60px 40px;
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.empty-state i {
+  font-size: 48px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+/* ========================================
+   MEDICAL CARD
+   ======================================== */
+
+.medcard-content {
+  display: grid;
+  gap: 24px;
+}
+
+.medcard-section {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 24px;
+}
+
+.medcard-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.medcard-info {
+  display: grid;
+  gap: 16px;
+}
+
+.info-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.info-item p {
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+/* Medical Records */
+.records-list {
+  display: grid;
+  gap: 12px;
+}
+
+.record-card {
+  background: rgba(14, 165, 233, 0.05);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.record-card:hover {
+  background: rgba(14, 165, 233, 0.1);
+  border-color: rgba(14, 165, 233, 0.4);
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.record-date {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.record-doctor {
+  color: var(--text-secondary);
+}
+
+.record-details {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.record-details p {
+  margin-bottom: 8px;
+}
+
+.record-details p:last-child {
+  margin-bottom: 0;
+}
+
+.record-details strong {
+  color: var(--text-primary);
+}
+
+/* ========================================
+   PROFILE SECTION
+   ======================================== */
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.profile-form {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+  max-width: 600px;
+}
+
+.profile-form .form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.profile-form input,
+.profile-form select,
+.profile-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.profile-form input:focus,
+.profile-form select:focus,
+.profile-form textarea:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+}
+
+.profile-form input:disabled,
+.profile-form select:disabled,
+.profile-form textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-display {
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+}
+
+.profile-form textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.profile-actions .btn {
+  flex: 1;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 768px) {
+  .cabinet-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cabinet-tabs {
+    gap: 8px;
+    padding: 0 16px;
+  }
+
+  .cabinet-tab {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .cabinet-tab span {
+    display: none;
+  }
+
+  .cabinet-content {
+    padding: 0 16px;
+  }
+
+  .appointment-header {
+    flex-direction: column;
+  }
+
+  .appointment-details {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .profile-form {
+    max-width: 100%;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+  }
+
+  .profile-actions .btn {
+    width: 100%;
+  }
+
+  .medcard-info {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-section h2 {
+    font-size: 20px;
+  }
+
+  .appointment-card {
+    padding: 16px;
+  }
+
+  .appointment-details {
+    font-size: 13px;
+  }
+
+  .detail-item i {
+    display: none;
+  }
+
+  .empty-state {
+    padding: 40px 20px;
+  }
+
+  .empty-state i {
+    font-size: 36px;
+  }
+
+  .record-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
