@@ -1,270 +1,297 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getMyAppointments, cancelAppointment, getMedicalCard, updateProfile } from '../api/index';
-import '../styles/Cabinet.css';
+import {
+  cancelAppointment,
+  getMedicalCard,
+  getMyAppointments,
+  statusLabel,
+  updateProfile,
+} from '../api/index';
+
+const tabs = [
+  { id: 'upcoming', label: 'Предстоящие' },
+  { id: 'history', label: 'История' },
+  { id: 'medcard', label: 'Медкарта' },
+  { id: 'profile', label: 'Профиль' },
+];
+
+const emptyProfile = {
+  name: '',
+  email: '',
+  phone: '',
+  birthDate: '',
+  bloodType: '',
+  allergies: '',
+  chronicDiseases: '',
+  insuranceNumber: '',
+};
+
+function todayStart() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function appointmentDate(appointment) {
+  return new Date(`${appointment.date}T${appointment.time || '00:00'}`);
+}
+
+function formatAppointment(appointment) {
+  const date = appointmentDate(appointment);
+  return {
+    date: Number.isNaN(date.getTime()) ? appointment.date : date.toLocaleDateString('ru-RU'),
+    time: appointment.time || '',
+  };
+}
+
+function profileFromCard(card, user) {
+  return {
+    name: card?.fullName || user?.name || '',
+    email: card?.email || user?.email || '',
+    phone: card?.phone || '',
+    birthDate: card?.birthDate || '',
+    bloodType: card?.bloodType || '',
+    allergies: card?.allergies || '',
+    chronicDiseases: card?.chronicDiseases || '',
+    insuranceNumber: card?.insuranceNumber || '',
+  };
+}
 
 const Cabinet = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
 
-  // Tabs and UI state
   const [activeTab, setActiveTab] = useState('upcoming');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // Data state
   const [appointments, setAppointments] = useState([]);
   const [medicalCard, setMedicalCard] = useState(null);
-  const [profile, setProfile] = useState({});
-
-  // Profile editing state
+  const [profile, setProfile] = useState(emptyProfile);
+  const [editedProfile, setEditedProfile] = useState(emptyProfile);
   const [editing, setEditing] = useState(false);
-  const [editedProfile, setEditedProfile] = useState({});
   const [confirmCancel, setConfirmCancel] = useState(null);
 
-  // Redirect if not authenticated or if admin
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate('/auth');
     } else if (user.role === 'admin') {
       navigate('/admin');
     }
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
-  // Load data when tab changes
   useEffect(() => {
-    loadTabData();
-  }, [activeTab]);
+    if (!authLoading && user?.role === 'patient') {
+      loadTabData();
+    }
+  }, [activeTab, authLoading, user?.id]);
 
-  const loadTabData = async () => {
+  const upcomingAppointments = useMemo(
+    () =>
+      appointments.filter((appointment) => {
+        const activeStatus = ['pending', 'confirmed', 'scheduled'].includes(appointment.status);
+        return activeStatus && appointmentDate(appointment) >= todayStart();
+      }),
+    [appointments]
+  );
+
+  const historyAppointments = useMemo(
+    () =>
+      appointments.filter((appointment) => {
+        const finalStatus = ['completed', 'cancelled'].includes(appointment.status);
+        return finalStatus || appointmentDate(appointment) < todayStart();
+      }),
+    [appointments]
+  );
+
+  async function loadTabData() {
     setLoading(true);
     setError('');
+
     try {
       if (activeTab === 'upcoming' || activeTab === 'history') {
-        const data = await getMyAppointments();
-        setAppointments(data);
-      } else if (activeTab === 'medcard') {
-        const data = await getMedicalCard();
-        setMedicalCard(data);
-      } else if (activeTab === 'profile') {
-        const data = await getMyAppointments(); // Load profile data
-        setProfile({
-          name: user?.name || '',
-          email: user?.email || '',
-          phone: data.phone || '',
-          bloodType: data.bloodType || '',
-          allergies: data.allergies || '',
-          chronicDiseases: data.chronicDiseases || '',
-        });
-        setEditedProfile({
-          name: user?.name || '',
-          email: user?.email || '',
-          phone: data.phone || '',
-          bloodType: data.bloodType || '',
-          allergies: data.allergies || '',
-          chronicDiseases: data.chronicDiseases || '',
-        });
+        setAppointments(await getMyAppointments());
+      }
+
+      if (activeTab === 'medcard' || activeTab === 'profile') {
+        const card = await getMedicalCard();
+        const nextProfile = profileFromCard(card, user);
+        setMedicalCard(card);
+        setProfile(nextProfile);
+        setEditedProfile(nextProfile);
       }
     } catch (err) {
       setError(err.message || 'Ошибка при загрузке данных');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/auth');
-    } catch (err) {
-      setError('Ошибка при выходе');
-    }
-  };
+  async function handleLogout() {
+    await logout();
+    navigate('/auth');
+  }
 
-  const handleCancelAppointment = async (appointmentId) => {
-    try {
-      await cancelAppointment(appointmentId);
-      setConfirmCancel(null);
-      loadTabData();
-    } catch (err) {
-      setError('Ошибка при отмене записи');
-    }
-  };
-
-  const handleEditProfile = () => {
-    setEditing(true);
-  };
-
-  const handleSaveProfile = async () => {
+  async function handleCancelAppointment(appointmentId) {
     try {
       setLoading(true);
-      await updateProfile({
-        phone: editedProfile.phone,
-        bloodType: editedProfile.bloodType,
-        allergies: editedProfile.allergies,
-        chronicDiseases: editedProfile.chronicDiseases,
-      });
-      setProfile(editedProfile);
-      setEditing(false);
+      await cancelAppointment(appointmentId);
+      setConfirmCancel(null);
+      setAppointments(await getMyAppointments());
     } catch (err) {
-      setError('Ошибка при сохранении профиля');
+      setError(err.message || 'Ошибка при отмене записи');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const handleCancelEdit = () => {
-    setEditedProfile(profile);
-    setEditing(false);
-  };
+  async function handleSaveProfile() {
+    try {
+      setLoading(true);
+      await updateProfile({
+        fullName: editedProfile.name,
+        phone: editedProfile.phone,
+        birthDate: editedProfile.birthDate,
+        bloodType: editedProfile.bloodType,
+        allergies: editedProfile.allergies,
+        chronicDiseases: editedProfile.chronicDiseases,
+        insuranceNumber: editedProfile.insuranceNumber,
+      });
 
-  const handleProfileChange = (field, value) => {
-    setEditedProfile(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+      const card = await getMedicalCard();
+      const nextProfile = profileFromCard(card, user);
+      setMedicalCard(card);
+      setProfile(nextProfile);
+      setEditedProfile(nextProfile);
+      setEditing(false);
+    } catch (err) {
+      setError(err.message || 'Ошибка при сохранении профиля');
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  // Filter appointments by status
-  const upcomingAppointments = appointments.filter(
-    apt => apt.status === 'scheduled' && new Date(apt.date) >= new Date()
-  );
+  function handleProfileChange(field, value) {
+    setEditedProfile((prev) => ({ ...prev, [field]: value }));
+  }
 
-  const historyAppointments = appointments.filter(
-    apt => apt.status === 'completed' || apt.status === 'cancelled'
-  );
+  function renderAppointmentCard(appointment, canCancel = false) {
+    const { date, time } = formatAppointment(appointment);
+    const remindDate = appointment.reminderAt
+      ? new Date(appointment.reminderAt.replace(' ', 'T'))
+      : new Date(appointmentDate(appointment));
+    if (!appointment.reminderAt) {
+      remindDate.setDate(remindDate.getDate() - 1);
+    }
 
-  // Format date and time
-  const formatDateTime = (dateTime) => {
-    const date = new Date(dateTime);
-    return {
-      date: date.toLocaleDateString('ru-RU'),
-      time: date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
-    };
-  };
+    return (
+      <article key={appointment.id} className={`appointment-card ${appointment.status}`}>
+        <div className="appointment-main">
+          <div>
+            <h3>{appointment.doctorName || 'Врач не указан'}</h3>
+            <p>{appointment.specialization || 'Специальность не указана'}</p>
+          </div>
+          <span className={`status-badge status-${appointment.status}`}>
+            {appointment.statusLabel || statusLabel(appointment.status)}
+          </span>
+        </div>
 
-  if (!user) return null;
+        <div className="appointment-details">
+          <span>{date}</span>
+          <span>{time}</span>
+          {appointment.cabinet && <span>Кабинет {appointment.cabinet}</span>}
+        </div>
+
+        {canCancel && (
+          <p className="reminder-note">
+            Напоминание: {remindDate.toLocaleDateString('ru-RU')}
+            {appointment.reminderMethods ? `, ${appointment.reminderMethods.toUpperCase()}` : ''}
+          </p>
+        )}
+
+        {canCancel && (
+          <div className="appointment-actions">
+            <button className="btn btn-danger btn-sm" onClick={() => setConfirmCancel(appointment.id)}>
+              Отменить запись
+            </button>
+          </div>
+        )}
+
+        {confirmCancel === appointment.id && (
+          <div className="inline-confirm">
+            <p>Отменить запись к врачу?</p>
+            <div>
+              <button className="btn btn-danger btn-sm" onClick={() => handleCancelAppointment(appointment.id)}>
+                Да, отменить
+              </button>
+              <button className="btn btn-secondary btn-sm" onClick={() => setConfirmCancel(null)}>
+                Оставить запись
+              </button>
+            </div>
+          </div>
+        )}
+      </article>
+    );
+  }
+
+  if (authLoading || !user) {
+    return (
+      <div className="cabinet-container">
+        <div className="loading-message">Загружаем кабинет...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="cabinet-container">
-      {/* Header */}
       <header className="cabinet-header">
-        <div className="cabinet-header-content">
-          <div className="header-greeting">
-            <h1>Личный кабинет</h1>
-            <p>Здравствуйте, {user.name}</p>
-          </div>
-          <button onClick={handleLogout} className="btn btn-secondary">
-            Выход
-          </button>
+        <div>
+          <p className="eyebrow">Личный кабинет</p>
+          <h1>Здравствуйте, {user.name}</h1>
         </div>
+        <button onClick={handleLogout} className="btn btn-secondary">
+          Выйти
+        </button>
       </header>
 
-      {/* Error Message */}
       {error && <div className="cabinet-error">{error}</div>}
 
-      {/* Tabs */}
-      <div className="cabinet-tabs">
-        <button
-          className={`cabinet-tab ${activeTab === 'upcoming' ? 'active' : ''}`}
-          onClick={() => setActiveTab('upcoming')}
-        >
-          <i className="bi bi-calendar-check"></i>
-          <span>Предстоящие</span>
-        </button>
-        <button
-          className={`cabinet-tab ${activeTab === 'history' ? 'active' : ''}`}
-          onClick={() => setActiveTab('history')}
-        >
-          <i className="bi bi-clock-history"></i>
-          <span>История</span>
-        </button>
-        <button
-          className={`cabinet-tab ${activeTab === 'medcard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('medcard')}
-        >
-          <i className="bi bi-file-medical"></i>
-          <span>Медкарта</span>
-        </button>
-        <button
-          className={`cabinet-tab ${activeTab === 'profile' ? 'active' : ''}`}
-          onClick={() => setActiveTab('profile')}
-        >
-          <i className="bi bi-person-gear"></i>
-          <span>Профиль</span>
-        </button>
-      </div>
+      <nav className="cabinet-tabs" aria-label="Разделы кабинета">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={`cabinet-tab ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab(tab.id);
+              setEditing(false);
+              setError('');
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
 
-      {/* Tab Content */}
-      <div className="cabinet-content">
-        {loading && <div className="loading-spinner">Загрузка...</div>}
+      <section className="cabinet-content">
+        {loading && <div className="loading-message">Загрузка...</div>}
 
-        {/* Предстоящие */}
         {activeTab === 'upcoming' && !loading && (
           <div className="tab-section">
-            <h2>Предстоящие записи</h2>
+            <div className="section-heading">
+              <h2>Предстоящие записи</h2>
+              <Link to="/booking" className="btn btn-primary btn-sm">
+                Новая запись
+              </Link>
+            </div>
             {upcomingAppointments.length > 0 ? (
               <div className="appointments-list">
-                {upcomingAppointments.map(apt => {
-                  const { date, time } = formatDateTime(apt.date);
-                  return (
-                    <div key={apt.id} className="appointment-card">
-                      <div className="appointment-header">
-                        <div className="appointment-doctor">
-                          <h3>{apt.doctorName}</h3>
-                          <p className="specialty">{apt.specialization}</p>
-                        </div>
-                        <span className="status-badge scheduled">
-                          {apt.status === 'scheduled' ? 'Запланирована' : apt.status}
-                        </span>
-                      </div>
-                      <div className="appointment-details">
-                        <div className="detail-item">
-                          <i className="bi bi-calendar"></i>
-                          <span>{date}</span>
-                        </div>
-                        <div className="detail-item">
-                          <i className="bi bi-clock"></i>
-                          <span>{time}</span>
-                        </div>
-                      </div>
-                      <div className="appointment-actions">
-                        <button
-                          className="btn btn-sm btn-danger"
-                          onClick={() => setConfirmCancel(apt.id)}
-                        >
-                          Отменить
-                        </button>
-                      </div>
-                      {confirmCancel === apt.id && (
-                        <div className="confirm-dialog">
-                          <p>Вы уверены, что хотите отменить эту запись?</p>
-                          <div className="confirm-actions">
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={() => handleCancelAppointment(apt.id)}
-                            >
-                              Да, отменить
-                            </button>
-                            <button
-                              className="btn btn-sm btn-secondary"
-                              onClick={() => setConfirmCancel(null)}
-                            >
-                              Нет, отменить
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {upcomingAppointments.map((appointment) => renderAppointmentCard(appointment, true))}
               </div>
             ) : (
               <div className="empty-state">
-                <i className="bi bi-inbox"></i>
                 <h3>Нет предстоящих записей</h3>
-                <p>У вас нет запланированных приемов</p>
+                <p>Выберите специалиста и удобное время приема.</p>
                 <Link to="/booking" className="btn btn-primary">
                   Записаться к врачу
                 </Link>
@@ -273,52 +300,22 @@ const Cabinet = () => {
           </div>
         )}
 
-        {/* История */}
         {activeTab === 'history' && !loading && (
           <div className="tab-section">
             <h2>История посещений</h2>
             {historyAppointments.length > 0 ? (
               <div className="appointments-list">
-                {historyAppointments.map(apt => {
-                  const { date, time } = formatDateTime(apt.date);
-                  const statusColor = apt.status === 'completed' ? 'completed' : 'cancelled';
-                  const statusText = apt.status === 'completed' ? 'Завершена' : 'Отменена';
-                  return (
-                    <div key={apt.id} className="appointment-card">
-                      <div className="appointment-header">
-                        <div className="appointment-doctor">
-                          <h3>{apt.doctorName}</h3>
-                          <p className="specialty">{apt.specialization}</p>
-                        </div>
-                        <span className={`status-badge ${statusColor}`}>
-                          {statusText}
-                        </span>
-                      </div>
-                      <div className="appointment-details">
-                        <div className="detail-item">
-                          <i className="bi bi-calendar"></i>
-                          <span>{date}</span>
-                        </div>
-                        <div className="detail-item">
-                          <i className="bi bi-clock"></i>
-                          <span>{time}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {historyAppointments.map((appointment) => renderAppointmentCard(appointment))}
               </div>
             ) : (
               <div className="empty-state">
-                <i className="bi bi-archive"></i>
-                <h3>История посещений пуста</h3>
-                <p>У вас еще нет завершенных или отменных приемов</p>
+                <h3>История пока пуста</h3>
+                <p>Завершенные и отмененные приемы появятся здесь.</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Медкарта */}
         {activeTab === 'medcard' && !loading && (
           <div className="tab-section">
             <h2>Медицинская карта</h2>
@@ -326,123 +323,110 @@ const Cabinet = () => {
               <div className="medcard-content">
                 <div className="medcard-section">
                   <h3>Основная информация</h3>
-                  <div className="medcard-info">
-                    <div className="info-item">
-                      <label>Группа крови:</label>
-                      <p>{medicalCard.bloodType || 'Не указана'}</p>
+                  <div className="info-grid">
+                    <div>
+                      <span>Группа крови</span>
+                      <strong>{medicalCard.bloodType || 'Не указана'}</strong>
                     </div>
-                    <div className="info-item">
-                      <label>Аллергии:</label>
-                      <p>{medicalCard.allergies || 'Не указаны'}</p>
+                    <div>
+                      <span>Полис</span>
+                      <strong>{medicalCard.insuranceNumber || 'Не указан'}</strong>
                     </div>
-                    <div className="info-item">
-                      <label>Хронические заболевания:</label>
-                      <p>{medicalCard.chronicDiseases || 'Не указаны'}</p>
+                    <div>
+                      <span>Аллергии</span>
+                      <strong>{medicalCard.allergies || 'Не указаны'}</strong>
+                    </div>
+                    <div>
+                      <span>Хронические заболевания</span>
+                      <strong>{medicalCard.chronicDiseases || 'Не указаны'}</strong>
                     </div>
                   </div>
                 </div>
 
-                {medicalCard.records && medicalCard.records.length > 0 && (
-                  <div className="medcard-section">
-                    <h3>Записи врача</h3>
+                <div className="medcard-section">
+                  <h3>Записи врача</h3>
+                  {medicalCard.records.length > 0 ? (
                     <div className="records-list">
-                      {medicalCard.records.map((record, idx) => (
-                        <div key={idx} className="record-card">
+                      {medicalCard.records.map((record) => (
+                        <article key={record.id} className="record-card">
                           <div className="record-header">
-                            <span className="record-date">
-                              {new Date(record.date).toLocaleDateString('ru-RU')}
-                            </span>
-                            <span className="record-doctor">{record.doctorName}</span>
+                            <span>{new Date(record.date).toLocaleDateString('ru-RU')}</span>
+                            <strong>{record.doctorName}</strong>
                           </div>
-                          <div className="record-details">
-                            <p className="diagnosis">
-                              <strong>Диагноз:</strong> {record.diagnosis}
-                            </p>
-                            {record.prescriptions && (
-                              <p className="prescriptions">
-                                <strong>Назначения:</strong> {record.prescriptions}
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                          <p><b>Диагноз:</b> {record.diagnosis || 'Не указан'}</p>
+                          {record.treatment && <p><b>Лечение:</b> {record.treatment}</p>}
+                          {record.prescriptions && <p><b>Назначения:</b> {record.prescriptions}</p>}
+                        </article>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="muted-text">Записей врача пока нет.</p>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="empty-state">
-                <i className="bi bi-file-earmark"></i>
                 <h3>Медкарта не заполнена</h3>
-                <p>Медицинские данные еще не добавлены</p>
+                <p>Заполните профиль, чтобы основные медицинские данные были под рукой.</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Профиль */}
         {activeTab === 'profile' && !loading && (
           <div className="tab-section">
-            <div className="profile-header">
+            <div className="section-heading">
               <h2>Мой профиль</h2>
               {!editing && (
-                <button onClick={handleEditProfile} className="btn btn-primary btn-sm">
-                  <i className="bi bi-pencil"></i> Редактировать
+                <button onClick={() => setEditing(true)} className="btn btn-primary btn-sm">
+                  Редактировать
                 </button>
               )}
             </div>
 
             <div className="profile-form">
-              <div className="form-group">
-                <label>ФИО</label>
-                {editing ? (
-                  <input
-                    type="text"
-                    value={editedProfile.name}
-                    onChange={e => handleProfileChange('name', e.target.value)}
-                    disabled
-                  />
-                ) : (
-                  <p className="form-display">{profile.name}</p>
-                )}
+              <div className="form-row">
+                <div className="form-group">
+                  <label>ФИО</label>
+                  <input value={editedProfile.name} disabled />
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input value={editedProfile.email} disabled />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Email</label>
-                {editing ? (
-                  <input
-                    type="email"
-                    value={editedProfile.email}
-                    onChange={e => handleProfileChange('email', e.target.value)}
-                    disabled
-                  />
-                ) : (
-                  <p className="form-display">{profile.email}</p>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label>Телефон</label>
-                {editing ? (
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Телефон</label>
                   <input
                     type="tel"
                     value={editedProfile.phone}
-                    onChange={e => handleProfileChange('phone', e.target.value)}
+                    onChange={(e) => handleProfileChange('phone', e.target.value)}
                     placeholder="+7 (999) 999-99-99"
+                    disabled={!editing}
                   />
-                ) : (
-                  <p className="form-display">{profile.phone || 'Не указан'}</p>
-                )}
+                </div>
+                <div className="form-group">
+                  <label>Дата рождения</label>
+                  <input
+                    type="date"
+                    value={editedProfile.birthDate}
+                    onChange={(e) => handleProfileChange('birthDate', e.target.value)}
+                    disabled={!editing}
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Группа крови</label>
-                {editing ? (
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Группа крови</label>
                   <select
                     value={editedProfile.bloodType}
-                    onChange={e => handleProfileChange('bloodType', e.target.value)}
+                    onChange={(e) => handleProfileChange('bloodType', e.target.value)}
+                    disabled={!editing}
                   >
-                    <option value="">Выберите группу крови</option>
+                    <option value="">Не указана</option>
                     <option value="O+">O+</option>
                     <option value="O-">O-</option>
                     <option value="A+">A+</option>
@@ -452,37 +436,35 @@ const Cabinet = () => {
                     <option value="AB+">AB+</option>
                     <option value="AB-">AB-</option>
                   </select>
-                ) : (
-                  <p className="form-display">{profile.bloodType || 'Не указана'}</p>
-                )}
+                </div>
+                <div className="form-group">
+                  <label>Номер полиса</label>
+                  <input
+                    value={editedProfile.insuranceNumber}
+                    onChange={(e) => handleProfileChange('insuranceNumber', e.target.value)}
+                    disabled={!editing}
+                  />
+                </div>
               </div>
 
               <div className="form-group">
                 <label>Аллергии</label>
-                {editing ? (
-                  <textarea
-                    value={editedProfile.allergies}
-                    onChange={e => handleProfileChange('allergies', e.target.value)}
-                    placeholder="Укажите известные аллергии"
-                    rows="3"
-                  />
-                ) : (
-                  <p className="form-display">{profile.allergies || 'Не указаны'}</p>
-                )}
+                <textarea
+                  value={editedProfile.allergies}
+                  onChange={(e) => handleProfileChange('allergies', e.target.value)}
+                  rows="3"
+                  disabled={!editing}
+                />
               </div>
 
               <div className="form-group">
                 <label>Хронические заболевания</label>
-                {editing ? (
-                  <textarea
-                    value={editedProfile.chronicDiseases}
-                    onChange={e => handleProfileChange('chronicDiseases', e.target.value)}
-                    placeholder="Укажите хронические заболевания"
-                    rows="3"
-                  />
-                ) : (
-                  <p className="form-display">{profile.chronicDiseases || 'Не указаны'}</p>
-                )}
+                <textarea
+                  value={editedProfile.chronicDiseases}
+                  onChange={(e) => handleProfileChange('chronicDiseases', e.target.value)}
+                  rows="3"
+                  disabled={!editing}
+                />
               </div>
 
               {editing && (
@@ -490,7 +472,13 @@ const Cabinet = () => {
                   <button onClick={handleSaveProfile} className="btn btn-success">
                     Сохранить
                   </button>
-                  <button onClick={handleCancelEdit} className="btn btn-secondary">
+                  <button
+                    onClick={() => {
+                      setEditedProfile(profile);
+                      setEditing(false);
+                    }}
+                    className="btn btn-secondary"
+                  >
                     Отмена
                   </button>
                 </div>
@@ -498,7 +486,7 @@ const Cabinet = () => {
             </div>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };

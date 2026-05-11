@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -6,6 +6,14 @@ function Navbar() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 8)
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const handleLogout = async () => {
     await logout()
@@ -27,7 +35,7 @@ function Navbar() {
   }
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="navbar-container">
         {/* Logo */}
         <div className="navbar-logo" onClick={() => handleNavClick('/')}>
@@ -53,7 +61,7 @@ function Navbar() {
             href="#"
             onClick={(e) => {
               e.preventDefault()
-              handleAnchorClick('benefits')
+              handleAnchorClick('advantages')
             }}
             className="navbar-link"
           >
@@ -142,7 +150,7 @@ function Navbar() {
             href="#"
             onClick={(e) => {
               e.preventDefault()
-              handleAnchorClick('benefits')
+              handleAnchorClick('advantages')
             }}
             className="navbar-mobile-link"
           >

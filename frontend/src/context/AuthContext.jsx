@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
         setUser({
           id: data.user_id,
           name: data.full_name || data.username,
-          email: data.username,
+          email: data.email || data.username,
           role: data.role,
         });
       } else {

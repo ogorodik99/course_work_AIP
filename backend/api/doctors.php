@@ -38,13 +38,21 @@ if ($method === 'POST') {
     }
 
     $data = json_decode(file_get_contents('php://input'), true);
+    $fullName = trim($data['full_name'] ?? $data['name'] ?? '');
+    $specializationId = $data['specialization_id'] ?? $data['specializationId'] ?? null;
+    $experienceYears = $data['experience_years'] ?? $data['experience'] ?? 0;
+
+    if ($fullName === '' || !$specializationId) {
+        echo json_encode(['success' => false, 'error' => 'Укажите ФИО и специальность врача']);
+        exit;
+    }
 
     $stmt = $pdo->prepare("INSERT INTO doctors (full_name, specialization_id, experience_years, education, phone, cabinet)
                            VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->execute([
-        $data['full_name'],
-        $data['specialization_id'],
-        $data['experience_years'] ?? 0,
+        $fullName,
+        $specializationId,
+        $experienceYears,
         $data['education'] ?? null,
         $data['phone'] ?? null,
         $data['cabinet'] ?? null

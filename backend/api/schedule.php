@@ -47,6 +47,26 @@ if ($method === 'POST') {
     }
 
     $data = json_decode(file_get_contents('php://input'), true);
+    $doctorId = $data['doctor_id'] ?? $data['doctorId'] ?? null;
+    $dayOfWeek = $data['day_of_week'] ?? $data['dayOfWeek'] ?? null;
+    $startTime = $data['start_time'] ?? $data['startTime'] ?? null;
+    $endTime = $data['end_time'] ?? $data['endTime'] ?? null;
+    $slotDuration = (int)($data['slot_duration'] ?? $data['duration'] ?? 30);
+
+    if (!$doctorId || !$dayOfWeek || !$startTime || !$endTime) {
+        echo json_encode(['success' => false, 'error' => 'Заполните врача, день недели и время приема']);
+        exit;
+    }
+
+    if (strtotime($startTime) === false || strtotime($endTime) === false || strtotime($startTime) >= strtotime($endTime)) {
+        echo json_encode(['success' => false, 'error' => 'Некорректный временной интервал']);
+        exit;
+    }
+
+    if ($slotDuration < 10 || $slotDuration > 120) {
+        echo json_encode(['success' => false, 'error' => 'Длительность приема должна быть от 10 до 120 минут']);
+        exit;
+    }
 
     $stmt = $pdo->prepare("
         INSERT INTO schedules (doctor_id, day_of_week, start_time, end_time, slot_duration, is_active)
@@ -55,11 +75,11 @@ if ($method === 'POST') {
                                 slot_duration = VALUES(slot_duration), is_active = 1
     ");
     $stmt->execute([
-        $data['doctor_id'],
-        $data['day_of_week'],
-        $data['start_time'],
-        $data['end_time'],
-        $data['slot_duration'] ?? 30
+        $doctorId,
+        $dayOfWeek,
+        $startTime,
+        $endTime,
+        $slotDuration
     ]);
 
     echo json_encode(['success' => true]);

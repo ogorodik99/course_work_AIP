@@ -12,10 +12,18 @@ if ($method === 'GET') {
     // Записи текущего пациента
     if ($action === 'my' && isset($_SESSION['user_id'])) {
         $stmt = $pdo->prepare("
-            SELECT a.*, d.full_name AS doctor_name, s.name AS specialization_name, d.cabinet
+            SELECT a.*, d.full_name AS doctor_name, s.name AS specialization_name, d.cabinet,
+                   r.remind_at, r.reminder_methods, r.reminder_sent
             FROM appointments a
             JOIN doctors d ON a.doctor_id = d.id
             JOIN specializations s ON d.specialization_id = s.id
+            LEFT JOIN (
+                SELECT appointment_id, MIN(remind_at) AS remind_at,
+                       GROUP_CONCAT(method ORDER BY method SEPARATOR ',') AS reminder_methods,
+                       MAX(is_sent) AS reminder_sent
+                FROM reminders
+                GROUP BY appointment_id
+            ) r ON r.appointment_id = a.id
             WHERE a.patient_id = ?
             ORDER BY a.appointment_date DESC, a.appointment_time DESC
         ");
@@ -114,6 +122,38 @@ if ($method === 'POST') {
         exit;
     }
 
+    $appointmentTs = strtotime($date . ' ' . $time);
+    if ($appointmentTs === false) {
+        echo json_encode(['success' => false, 'error' => 'Некорректные дата или время приема']);
+        exit;
+    }
+
+    // Проверяем, что дата и время не в прошлом
+    if ($appointmentTs < time()) {
+        echo json_encode(['success' => false, 'error' => 'Нельзя записаться на прошедшее время']);
+        exit;
+    }
+
+    // Проверяем, что слот входит в расписание врача и совпадает с интервалом приема
+    $dayOfWeek = date('N', strtotime($date));
+    $stmt = $pdo->prepare("SELECT * FROM schedules WHERE doctor_id = ? AND day_of_week = ? AND is_active = 1");
+    $stmt->execute([$doctorId, $dayOfWeek]);
+    $schedule = $stmt->fetch();
+
+    if (!$schedule) {
+        echo json_encode(['success' => false, 'error' => 'Врач не принимает в выбранный день']);
+        exit;
+    }
+
+    $startTs = strtotime($date . ' ' . $schedule['start_time']);
+    $endTs = strtotime($date . ' ' . $schedule['end_time']);
+    $duration = (int)$schedule['slot_duration'] * 60;
+
+    if ($appointmentTs < $startTs || ($appointmentTs + $duration) > $endTs || (($appointmentTs - $startTs) % $duration) !== 0) {
+        echo json_encode(['success' => false, 'error' => 'Выбранное время не входит в расписание врача']);
+        exit;
+    }
+
     // Проверяем, не занят ли слот
     $stmt = $pdo->prepare("SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND status != 'cancelled'");
     $stmt->execute([$doctorId, $date, $time]);
@@ -122,24 +162,37 @@ if ($method === 'POST') {
         exit;
     }
 
-    // Проверяем, что дата в будущем
-    if (strtotime($date) < strtotime('today')) {
-        echo json_encode(['success' => false, 'error' => 'Нельзя записаться на прошедшую дату']);
-        exit;
+    // Создаём запись или переиспользуем ранее отменённый слот
+    $stmt = $pdo->prepare("SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND status = 'cancelled' LIMIT 1");
+    $stmt->execute([$doctorId, $date, $time]);
+    $cancelledId = $stmt->fetchColumn();
+
+    if ($cancelledId) {
+        $stmt = $pdo->prepare("
+            UPDATE appointments
+            SET patient_id = ?, reason = ?, status = 'confirmed', notes = NULL
+            WHERE id = ?
+        ");
+        $stmt->execute([$_SESSION['user_id'], $reason, $cancelledId]);
+        $appointmentId = $cancelledId;
+        $stmt = $pdo->prepare("DELETE FROM reminders WHERE appointment_id = ?");
+        $stmt->execute([$appointmentId]);
+        $stmt = $pdo->prepare("DELETE FROM queue WHERE appointment_id = ?");
+        $stmt->execute([$appointmentId]);
+    } else {
+        $stmt = $pdo->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, reason, status)
+                               VALUES (?, ?, ?, ?, ?, 'confirmed')");
+        $stmt->execute([$_SESSION['user_id'], $doctorId, $date, $time, $reason]);
+        $appointmentId = $pdo->lastInsertId();
     }
 
-    // Создаём запись
-    $stmt = $pdo->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, reason, status)
-                           VALUES (?, ?, ?, ?, ?, 'confirmed')");
-    $stmt->execute([$_SESSION['user_id'], $doctorId, $date, $time, $reason]);
-
-    $appointmentId = $pdo->lastInsertId();
-
-    // Создаём напоминание (за день до приёма)
+    // Создаём напоминания (email и SMS за день до приёма)
     $remindAt = date('Y-m-d 10:00:00', strtotime($date . ' -1 day'));
     if (strtotime($remindAt) > time()) {
-        $stmt = $pdo->prepare("INSERT INTO reminders (appointment_id, remind_at, method) VALUES (?, ?, 'email')");
-        $stmt->execute([$appointmentId, $remindAt]);
+        $stmt = $pdo->prepare("INSERT INTO reminders (appointment_id, remind_at, method) VALUES (?, ?, ?)");
+        foreach (['email', 'sms'] as $method) {
+            $stmt->execute([$appointmentId, $remindAt, $method]);
+        }
     }
 
     echo json_encode(['success' => true, 'id' => $appointmentId, 'message' => 'Запись успешно создана!']);
@@ -162,14 +215,29 @@ if ($method === 'PUT') {
         exit;
     }
 
+    $allowedStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+    if (!in_array($status, $allowedStatuses, true)) {
+        echo json_encode(['success' => false, 'error' => 'Некорректный статус записи']);
+        exit;
+    }
+
     // Пациент может только отменить свою запись
     if ($_SESSION['role'] === 'patient') {
+        if ($status !== 'cancelled') {
+            echo json_encode(['success' => false, 'error' => 'Пациент может только отменить запись']);
+            exit;
+        }
         $stmt = $pdo->prepare("UPDATE appointments SET status = ? WHERE id = ? AND patient_id = ?");
         $stmt->execute([$status, $id, $_SESSION['user_id']]);
     } else {
         // Админ может менять любой статус
         $stmt = $pdo->prepare("UPDATE appointments SET status = ?, notes = ? WHERE id = ?");
         $stmt->execute([$status, $data['notes'] ?? null, $id]);
+    }
+
+    if ($status === 'cancelled') {
+        $stmt = $pdo->prepare("DELETE FROM queue WHERE appointment_id = ?");
+        $stmt->execute([$id]);
     }
 
     echo json_encode(['success' => true]);

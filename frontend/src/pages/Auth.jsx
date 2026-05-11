@@ -28,7 +28,7 @@ const Auth = () => {
     try {
       const response = await login(loginEmail, loginPassword);
 
-      if (response.role === 'admin') {
+      if (response.user?.role === 'admin') {
         navigate('/admin');
       } else {
         navigate('/cabinet');

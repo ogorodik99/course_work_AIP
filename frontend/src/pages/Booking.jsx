@@ -5,7 +5,7 @@ import { getSpecializations, getDoctors, getSlots, createAppointment } from '../
 
 const Booking = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   // State management
   const [currentStep, setCurrentStep] = useState(1);
@@ -16,16 +16,17 @@ const Booking = () => {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
+  const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
   // Check auth on mount
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       navigate('/auth');
     }
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
   // Load specializations on mount
   useEffect(() => {
@@ -53,6 +54,8 @@ const Booking = () => {
         const data = await getDoctors(selectedSpec);
         setDoctors(data);
         setSelectedDoctor(null);
+        setSelectedDate(null);
+        setSelectedTime(null);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -102,7 +105,7 @@ const Booking = () => {
         doctor_id: selectedDoctor,
         date: selectedDate,
         time: selectedTime,
-        reason: '',
+        reason,
       });
       setSuccess(true);
     } catch (err) {
@@ -118,18 +121,31 @@ const Booking = () => {
     setSelectedDoctor(null);
     setSelectedDate(null);
     setSelectedTime(null);
+    setReason('');
     setSuccess(false);
   };
 
   const getTodayDate = () => {
-    return new Date().toISOString().split('T')[0];
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
+
+  if (authLoading) {
+    return (
+      <div className="booking-container">
+        <div className="loading-message">Проверяем сессию...</div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
       <div className="booking-container">
         <div className="success-screen">
-          <i className="bi bi-check-circle" style={{ fontSize: '80px', color: '#27ae60' }}></i>
+          <div className="success-mark">OK</div>
           <h2>Вы успешно записаны!</h2>
           <div className="success-buttons">
             <Link to="/cabinet" className="btn btn-success">
@@ -185,15 +201,24 @@ const Booking = () => {
               {specializations.map((spec) => (
                 <div
                   key={spec.id}
-                  className={`selectable-card ${selectedSpec === spec.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedSpec(spec.id)}
+                  className={`selectable-card glass-card ${selectedSpec === spec.id ? 'selected' : ''}`}
+                  onClick={() => {
+                    setSelectedSpec(spec.id);
+                    setError(null);
+                  }}
                 >
-                  <i className={`bi ${spec.icon || 'bi-stethoscope'}`}></i>
+                  <div className="card-mark">+</div>
                   <h4>{spec.name}</h4>
                   <p>{spec.description}</p>
                 </div>
               ))}
             </div>
+            {!loading && specializations.length === 0 && (
+              <div className="empty-state compact">
+                <h3>Специальности пока не найдены</h3>
+                <p>Проверьте подключение к backend или данные в базе.</p>
+              </div>
+            )}
             <div className="booking-buttons">
               <button
                 className="btn btn-primary"
@@ -217,16 +242,28 @@ const Booking = () => {
               {doctors.map((doctor) => (
                 <div
                   key={doctor.id}
-                  className={`selectable-card ${selectedDoctor === doctor.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedDoctor(doctor.id)}
+                  className={`selectable-card glass-card ${selectedDoctor === doctor.id ? 'selected' : ''}`}
+                  onClick={() => {
+                    setSelectedDoctor(doctor.id);
+                    setSelectedDate(null);
+                    setSelectedTime(null);
+                    setError(null);
+                  }}
                 >
                   <h4>{doctor.name}</h4>
                   <p>{doctor.specialization}</p>
                   <p>Стаж: {doctor.experience} лет</p>
                   <p className="education">{doctor.education}</p>
+                  {doctor.cabinet && <p>Кабинет {doctor.cabinet}</p>}
                 </div>
               ))}
             </div>
+            {!loading && doctors.length === 0 && (
+              <div className="empty-state compact">
+                <h3>Врачи не найдены</h3>
+                <p>Выберите другую специальность или добавьте врача в админ-панели.</p>
+              </div>
+            )}
             <div className="booking-buttons">
               <button
                 className="btn btn-primary"
@@ -251,23 +288,27 @@ const Booking = () => {
                 type="date"
                 min={getTodayDate()}
                 value={selectedDate || ''}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  setSelectedTime(null);
+                }}
                 className="date-input"
               />
               {selectedDate && slots.length > 0 && (
                 <div className="time-slots-grid">
                   {slots.map((slot) => (
                     <button
-                      key={slot}
-                      className={`time-slot ${selectedTime === slot ? 'selected' : ''}`}
-                      onClick={() => setSelectedTime(slot)}
+                      key={slot.value}
+                      type="button"
+                      className={`time-slot ${selectedTime === slot.value ? 'selected' : ''}`}
+                      onClick={() => setSelectedTime(slot.value)}
                     >
-                      {slot}
+                      {slot.label}
                     </button>
                   ))}
                 </div>
               )}
-              {selectedDate && slots.length === 0 && (
+              {selectedDate && !loading && slots.length === 0 && (
                 <p className="no-slots">Нет доступных слотов на выбранную дату</p>
               )}
             </div>
@@ -309,12 +350,21 @@ const Booking = () => {
               </div>
               <div className="confirm-item">
                 <span className="confirm-label">Время:</span>
-                <span className="confirm-value">{selectedTime}</span>
+                <span className="confirm-value">{selectedTime?.slice(0, 5)}</span>
               </div>
               <div className="confirm-item">
                 <span className="confirm-label">Пациент:</span>
                 <span className="confirm-value">{user?.name}</span>
               </div>
+              <label className="confirm-reason">
+                Причина обращения
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Кратко опишите жалобу или оставьте поле пустым"
+                  rows="3"
+                />
+              </label>
             </div>
             <div className="booking-buttons">
               <button

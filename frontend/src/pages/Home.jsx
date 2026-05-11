@@ -103,7 +103,7 @@ const Home = () => {
               ref={(el) => (fadeInElements.current[0] = el)}
             >
               <div className="card-icon">
-                <i className="bi bi-lightning-charge"></i>
+                <span>01</span>
               </div>
               <h3>Быстрая запись</h3>
               <p>
@@ -117,7 +117,7 @@ const Home = () => {
               ref={(el) => (fadeInElements.current[1] = el)}
             >
               <div className="card-icon">
-                <i className="bi bi-people"></i>
+                <span>02</span>
               </div>
               <h3>Электронная очередь</h3>
               <p>
@@ -131,7 +131,7 @@ const Home = () => {
               ref={(el) => (fadeInElements.current[2] = el)}
             >
               <div className="card-icon">
-                <i className="bi bi-person-badge"></i>
+                <span>03</span>
               </div>
               <h3>Личный кабинет</h3>
               <p>
@@ -145,7 +145,7 @@ const Home = () => {
               ref={(el) => (fadeInElements.current[3] = el)}
             >
               <div className="card-icon">
-                <i className="bi bi-bell"></i>
+                <span>04</span>
               </div>
               <h3>Напоминания</h3>
               <p>
@@ -168,7 +168,7 @@ const Home = () => {
               ref={(el) => (fadeInElements.current[4] = el)}
             >
               <div className="specialist-icon">
-                <i className="bi bi-heart-pulse"></i>
+                <span>Т</span>
               </div>
               <h3>Терапевт</h3>
               <p>
@@ -182,7 +182,7 @@ const Home = () => {
               ref={(el) => (fadeInElements.current[5] = el)}
             >
               <div className="specialist-icon">
-                <i className="bi bi-activity"></i>
+                <span>К</span>
               </div>
               <h3>Кардиолог</h3>
               <p>
@@ -196,7 +196,7 @@ const Home = () => {
               ref={(el) => (fadeInElements.current[6] = el)}
             >
               <div className="specialist-icon">
-                <i className="bi bi-brain"></i>
+                <span>Н</span>
               </div>
               <h3>Невролог</h3>
               <p>
@@ -210,7 +210,7 @@ const Home = () => {
               ref={(el) => (fadeInElements.current[7] = el)}
             >
               <div className="specialist-icon">
-                <i className="bi bi-scissors"></i>
+                <span>Х</span>
               </div>
               <h3>Хирург</h3>
               <p>
@@ -224,7 +224,7 @@ const Home = () => {
               ref={(el) => (fadeInElements.current[8] = el)}
             >
               <div className="specialist-icon">
-                <i className="bi bi-eye"></i>
+                <span>О</span>
               </div>
               <h3>Офтальмолог</h3>
               <p>
@@ -238,7 +238,7 @@ const Home = () => {
               ref={(el) => (fadeInElements.current[9] = el)}
             >
               <div className="specialist-icon">
-                <i className="bi bi-bandaid"></i>
+                <span>Д</span>
               </div>
               <h3>Дерматолог</h3>
               <p>

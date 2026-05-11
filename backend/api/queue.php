@@ -5,9 +5,9 @@ include '../db.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// GET — получить очередь на сегодня
+// GET — получить очередь на выбранную дату
 if ($method === 'GET') {
-    $today = date('Y-m-d');
+    $date = $_GET['date'] ?? date('Y-m-d');
     $doctorId = $_GET['doctor_id'] ?? null;
 
     $sql = "
@@ -21,7 +21,7 @@ if ($method === 'GET') {
         JOIN users u ON a.patient_id = u.id
         WHERE a.appointment_date = ?
     ";
-    $params = [$today];
+    $params = [$date];
 
     if ($doctorId) {
         $sql .= " AND a.doctor_id = ?";
@@ -37,23 +37,24 @@ if ($method === 'GET') {
     exit;
 }
 
-// POST — сформировать очередь на сегодня (admin)
+// POST — сформировать очередь на выбранную дату (admin)
 if ($method === 'POST') {
     if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
         echo json_encode(['success' => false, 'error' => 'Доступ запрещён']);
         exit;
     }
 
-    $today = date('Y-m-d');
+    $data = json_decode(file_get_contents('php://input'), true);
+    $date = $data['date'] ?? date('Y-m-d');
 
-    // Получаем все подтверждённые записи на сегодня, которых ещё нет в очереди
+    // Получаем все подтверждённые записи на выбранную дату, которых ещё нет в очереди
     $stmt = $pdo->prepare("
         SELECT a.id FROM appointments a
         LEFT JOIN queue q ON a.id = q.appointment_id
         WHERE a.appointment_date = ? AND a.status IN ('confirmed', 'pending') AND q.id IS NULL
         ORDER BY a.appointment_time ASC
     ");
-    $stmt->execute([$today]);
+    $stmt->execute([$date]);
     $appointments = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
     // Определяем последний номер в очереди
@@ -62,7 +63,7 @@ if ($method === 'POST') {
         JOIN appointments a ON q.appointment_id = a.id
         WHERE a.appointment_date = ?
     ");
-    $stmt->execute([$today]);
+    $stmt->execute([$date]);
     $lastNumber = $stmt->fetchColumn() ?: 0;
 
     $added = 0;

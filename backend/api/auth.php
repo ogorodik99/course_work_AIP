@@ -14,10 +14,20 @@ if ($method === 'GET') {
             echo json_encode(['authorized' => false]);
             exit;
         }
+
+        $email = $_SESSION['email'] ?? null;
+        if (!$email) {
+            $stmt = $pdo->prepare("SELECT email FROM users WHERE id = ?");
+            $stmt->execute([$_SESSION['user_id']]);
+            $email = $stmt->fetchColumn() ?: $_SESSION['username'];
+            $_SESSION['email'] = $email;
+        }
+
         echo json_encode([
             'authorized' => true,
             'user_id' => $_SESSION['user_id'],
             'username' => $_SESSION['username'],
+            'email' => $email,
             'full_name' => $_SESSION['full_name'],
             'role' => $_SESSION['role']
         ]);
@@ -56,6 +66,7 @@ if ($method === 'POST') {
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
+            $_SESSION['email'] = $user['email'];
             $_SESSION['full_name'] = $user['full_name'] ?? $user['username'];
             $_SESSION['role'] = $user['role'];
 
@@ -116,6 +127,7 @@ if ($method === 'POST') {
         // Автоматический вход
         $_SESSION['user_id'] = $userId;
         $_SESSION['username'] = $name;
+        $_SESSION['email'] = $email;
         $_SESSION['full_name'] = $name;
         $_SESSION['role'] = 'patient';
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -10,10 +10,13 @@ import Cabinet from './pages/Cabinet'
 import Admin from './pages/Admin'
 
 function App() {
+  const { pathname } = useLocation()
+  const isAdmin = pathname.startsWith('/admin')
+
   return (
     <AuthProvider>
-      <div className="app-container">
-        <Navbar />
+      <div className={`app-container ${isAdmin ? 'admin-shell' : ''}`}>
+        {!isAdmin && <Navbar />}
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -23,7 +26,7 @@ function App() {
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
-        <Footer />
+        {!isAdmin && <Footer />}
       </div>
     </AuthProvider>
   )

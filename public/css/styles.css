@@ -1,19 +1,28 @@
 /* ===== BASE ===== */
 :root {
-    --primary: #0ea5e9;
-    --primary-dark: #0369a1;
-    --accent: #06d6a0;
-    --accent-dark: #05b384;
-    --bg-dark: #0a0e27;
-    --bg-card: rgba(255, 255, 255, 0.06);
-    --bg-card-hover: rgba(255, 255, 255, 0.12);
-    --text: #e2e8f0;
-    --text-muted: #94a3b8;
-    --glass: rgba(255, 255, 255, 0.08);
-    --glass-border: rgba(255, 255, 255, 0.12);
-    --radius: 16px;
-    --radius-lg: 24px;
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  /* Фоновые значения */
+  --bg: #0a0e27;                /* Из --bg-dark */
+  --surface: #141a38;           /* Сплошной эквивалент --bg-card для стабильности */
+  --surface-muted: rgba(255, 255, 255, 0.06); /* Ваша карточка из второго кода */
+  
+  /* Текст и границы */
+  --text: #e2e8f0;              /* Из --text */
+  --muted: #94a3b8;             /* Из --text-muted */
+  --line: rgba(255, 255, 255, 0.12); /* Из --glass-border */
+  
+  /* Акцентные цвета */
+  --primary: #0ea5e9;           /* Из --primary */
+  --primary-strong: #0369a1;    /* Из --primary-dark */
+  --secondary: #06d6a0;         /* Из --accent (вместо синего во втором коде) */
+  
+  /* Статусные цвета (сохраняем яркость для читаемости на темном) */
+  --success: #10b981; 
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  
+  /* Геометрия и эффекты */
+  --radius: 16px;               /* Из --radius */
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.3); /* Из --shadow */
 }
 
 * {

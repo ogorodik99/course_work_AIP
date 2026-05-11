@@ -56,12 +56,34 @@ if ($method === 'PUT') {
     $data = json_decode(file_get_contents('php://input'), true);
     $patientId = $_SESSION['user_id'];
 
+    $pick = function ($keys, $fallback = null) use ($data) {
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $data) && $data[$key] !== null) {
+                return $data[$key];
+            }
+        }
+        return $fallback;
+    };
+
+    $stmt = $pdo->prepare("
+        SELECT u.full_name, u.phone, u.birth_date,
+               mc.blood_type, mc.allergies, mc.chronic_diseases, mc.insurance_number
+        FROM users u
+        LEFT JOIN medical_cards mc ON mc.patient_id = u.id
+        WHERE u.id = ?
+    ");
+    $stmt->execute([$patientId]);
+    $current = $stmt->fetch() ?: [];
+
+    $stmt = $pdo->prepare("INSERT IGNORE INTO medical_cards (patient_id) VALUES (?)");
+    $stmt->execute([$patientId]);
+
     // Обновляем данные пользователя
     $stmt = $pdo->prepare("UPDATE users SET full_name = ?, phone = ?, birth_date = ? WHERE id = ?");
     $stmt->execute([
-        $data['full_name'] ?? null,
-        $data['phone'] ?? null,
-        $data['birth_date'] ?? null,
+        $pick(['full_name', 'fullName', 'name'], $current['full_name'] ?? null),
+        $pick(['phone'], $current['phone'] ?? null),
+        $pick(['birth_date', 'birthDate'], $current['birth_date'] ?? null),
         $patientId
     ]);
 
@@ -72,10 +94,10 @@ if ($method === 'PUT') {
         WHERE patient_id = ?
     ");
     $stmt->execute([
-        $data['blood_type'] ?? null,
-        $data['allergies'] ?? null,
-        $data['chronic_diseases'] ?? null,
-        $data['insurance_number'] ?? null,
+        $pick(['blood_type', 'bloodType'], $current['blood_type'] ?? null),
+        $pick(['allergies'], $current['allergies'] ?? null),
+        $pick(['chronic_diseases', 'chronicDiseases'], $current['chronic_diseases'] ?? null),
+        $pick(['insurance_number', 'insuranceNumber'], $current['insurance_number'] ?? null),
         $patientId
     ]);
 
