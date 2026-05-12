@@ -1,4 +1,4 @@
-const BASE = '/backend/api';
+const BASE = 'http://localhost:8000/api';
 
 async function request(url, options = {}) {
   const res = await fetch(url, { credentials: 'include', ...options });
