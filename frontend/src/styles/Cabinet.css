@@ -39,6 +39,7 @@
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 4px;
+  word-break: break-word;
 }
 
 .header-greeting p {
@@ -190,7 +191,8 @@
 
 .appointment-details {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 12px 24px;
   margin-bottom: 16px;
   padding: 12px 0;
   border-top: 1px solid var(--border);
@@ -212,7 +214,14 @@
 
 .appointment-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.appointment-actions .btn {
+  flex: 1 1 auto;
+  min-width: 120px;
+  white-space: nowrap;
 }
 
 /* Confirm Dialog */
@@ -244,6 +253,7 @@
 
 .confirm-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -511,6 +521,24 @@
   .appointment-details {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .appointment-actions {
+    flex-direction: column;
+  }
+
+  .appointment-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .confirm-actions {
+    flex-direction: column;
+  }
+
+  .confirm-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .profile-form {

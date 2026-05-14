@@ -427,8 +427,8 @@ ul {
   align-items: center;
   padding: 116px 0 64px;
   background:
-    linear-gradient(120deg, rgba(15, 118, 110, 0.1), rgba(37, 99, 235, 0.08)),
-    var(--bg);
+          linear-gradient(120deg, rgba(15, 118, 110, 0.1), rgba(37, 99, 235, 0.08)),
+          var(--bg);
 }
 
 .hero-content {

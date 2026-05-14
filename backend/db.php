@@ -1,10 +1,11 @@
 <?php
+$host = 'db';  // Имя сервиса в docker-compose
 $db   = 'medzap';
-$user = 'root';
-$pass = '';
+$user = 'user';  // Пользователь из docker-compose
+$pass = 'password';  // Пароль из docker-compose
 $charset = 'utf8mb4';
 
-$dsn = "mysql:unix_socket=/tmp/mysql.sock;dbname=$db;charset=$charset";
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
